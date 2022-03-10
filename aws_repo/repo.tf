@@ -3,6 +3,6 @@ provider "aws" {
   region  = "us-east-1"
 }
 
-resource "aws_ecr_repository" "test_repo" {
-  name = "test-repo" # Naming my repository
+resource "aws_ecr_repository" "test_repo1" {
+  name = "test-repo1" # Naming my repository
 }
