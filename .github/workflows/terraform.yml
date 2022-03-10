@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  terraform:
+  create_repo:
     name: 'Terraform'
     runs-on: ubuntu-latest
     env:
