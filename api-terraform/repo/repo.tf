@@ -3,8 +3,8 @@ provider "aws" {
   region  = "us-east-1"
 }
 
-resource "aws_ecr_repository" "foo" {
-  name                 = "foo"
+resource "aws_ecr_repository" "sec-test" {
+  name                 = "sec-test"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
