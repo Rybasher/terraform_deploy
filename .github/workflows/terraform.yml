@@ -7,55 +7,82 @@ on:
   pull_request:
 
 jobs:
-  create_repo:
-    name: 'Terraform'
-    runs-on: ubuntu-latest
-    env:
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      AWS_REGION: 'us-east-1'
+    deploy:
+      name: Build image
+      runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkoout
-        uses: actions/checkout@v2
+      steps:
+        - name: Check out code
+          uses: actions/checkout@v2
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: us-east-1
 
-      - name: Terraform Init
-        id: init
-        working-directory: api-terraform/repo/
-        run: terraform init -input=false
+        - name: Login to Amazon ECR
+          id: login-ecr
+          uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        working-directory: api-terraform/repo/
-        run: terraform apply -auto-approve
+        - name: Build, tag, and push image to Amazon ECR
+          env:
+            ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+            ECR_REPOSITORY: indexer-repo
+            IMAGE_TAG: ${{ github.sha }}
+          run: |
+            docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+            docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-#  deploy:
-#    name: Build image
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: Check out code
-#        uses: actions/checkout@v2
-#
-#      - name: Configure AWS credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-#          aws-region: us-east-1
-#
-#      - name: Login to Amazon ECR
-#        id: login-ecr
-#        uses: aws-actions/amazon-ecr-login@v1
-#
-#      - name: Build, tag, and push image to Amazon ECR
-#        env:
-#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-#          ECR_REPOSITORY: test-repo1
-#          IMAGE_TAG: ${{ github.sha }}
-#        run: |
-#          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-#          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    terraform:
+      name: 'Terraform'
+      runs-on: ubuntu-latest
+      env:
+        working-directory: api-terraform/backend
+      defaults:
+        run:
+          working-directory: ${{ env.working-directory }}
+
+      steps:
+        - name: Checkoout
+          uses: actions/checkout@v2
+
+        - name: Configure AWS credentials
+          uses: aws-actions/configure-aws-credentials@v1
+          with:
+            aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            aws-region: 'us-east-1'
+
+        - name: Setup Terraform
+          uses: hashicorp/setup-terraform@v1
+          with:
+            terraform_version: 1.0.8
+
+        - name: Terraform Format
+          id: fmt
+          run: terraform fmt -check
+          continue-on-error: true
+
+        - name: Terraform Init
+          id: init
+          run: terraform init -input=false
+
+        - name: Terraform Validate
+          id: validate
+          run: terraform validate -no-color
+
+        - name: Terraform Plan
+          id: plan
+          run: terraform plan -no-color
+          continue-on-error: true
+
+        - name: Terraform Plan Status
+          if: steps.plan.outcome == 'failure'
+          run: exit 1
+
+        - name: Terraform Apply
+          if:  github.event_name == 'push'
+          run: terraform apply -auto-approve
+
