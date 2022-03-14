@@ -216,16 +216,16 @@ resource "aws_security_group" "service_security_group" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-#
-#resource "aws_db_instance" "default" {
-#  allocated_storage    = 10
-#  engine               = "postgres"
-#  engine_version       = "12.6"
-#  instance_class       = "db.t2.micro"
-#  name                 = "databaseone"
-#  username             = "postgres"
-#  password             = "test22819"
-#  parameter_group_name = "default.postgres12"
-#  skip_final_snapshot  = true
-#}
-#
+
+resource "aws_db_instance" "default" {
+  allocated_storage    = 10
+  engine               = "postgres"
+  engine_version       = "12.6"
+  instance_class       = "db.t2.micro"
+  name                 = "databaseone"
+  username             = "postgres"
+  password             = "test22819"
+  parameter_group_name = "default.postgres12"
+  skip_final_snapshot  = true
+}
+
