@@ -108,7 +108,23 @@ resource "aws_ecs_cluster" "test-cluster" {
 
 resource "aws_ecs_task_definition" "indexer-task" {
   family                   = "indexer-task" # Naming our first task
-  container_definitions    = file("container-definition.json")
+  container_definitions    = <<DEFINITION
+  [
+    {
+      "name": "indexer-task",
+      "image": "${aws_ecr_repository.indexer-repo.repository_url}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000
+        }
+      ],
+      "memory": 512,
+      "cpu": 256
+    }
+  ]
+  DEFINITION
   requires_compatibilities = ["FARGATE"] # Stating that we are using ECS Fargate
   network_mode             = "awsvpc"    # Using awsvpc as our network mode as this is required for Fargate
   memory                   = 512         # Specifying the memory our container requires
