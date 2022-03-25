@@ -1,11 +1,17 @@
 name: Deploy to production
 
+#on:
+#  workflow_run:
+#    workflows: ["Terraform"]
+#    branches: ["main"]
+#    types:
+#      - completed
 on:
-  workflow_run:
-    workflows: ["Terraform"]
-    branches: ["main"]
-    types:
-      - completed
+  push:
+    branches:
+    - main1
+  pull_request:
+
 
 jobs:
   deploy:
