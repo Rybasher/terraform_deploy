@@ -38,8 +38,10 @@ jobs:
         - name: run loop
           env:
             CLUSTERS: name:some1 name:some2
+            SOME: Hi All
           run: |
             for item in $CLUSTERS; do
             echo $(echo $item | cut -d ":" -f1); 
             echo $(echo $item | cut -d ":" -f2); 
             done;
+            echo ${SOME,,}
