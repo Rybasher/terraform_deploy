@@ -10,6 +10,9 @@ jobs:
     deploy:
       name: Build image
       runs-on: ubuntu-latest
+      strategy:
+        matrix:
+          text: [Some]
 
       steps:
         - name: Check out code
@@ -44,4 +47,4 @@ jobs:
             echo $(echo $item | cut -d ":" -f1); 
             echo $(echo $item | cut -d ":" -f2); 
             done;
-            echo ${SOME,,}
+            echo ${{ matrix.text,, }}
