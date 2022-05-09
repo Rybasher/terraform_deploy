@@ -37,5 +37,5 @@ jobs:
 
         - name: run loop
           env:
-            CLUSTERS: some, some2
+            CLUSTERS: some some2
           run: for i in $CLUSTERS; do echo $i; done;
