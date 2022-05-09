@@ -7,7 +7,6 @@ on:
   pull_request:
 
 jobs:
-    loopcheck:
     deploy:
       name: Build image
       runs-on: ubuntu-latest
