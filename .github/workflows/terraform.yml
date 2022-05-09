@@ -47,4 +47,5 @@ jobs:
             echo $(echo $item | cut -d ":" -f1); 
             echo $(echo $item | cut -d ":" -f2); 
             done;
-            echo ${{ matrix.text,, }}
+            SOME=${{ matrix.text }}
+            echo ${SOME,,}
