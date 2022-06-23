@@ -22,6 +22,17 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: prod-proxy-repo
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --build-arg NPM_TOKEN=${{ secrets.NPM_TOKEN }} -t $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG"
+
       - name: Blue green deploy
         uses: silinternational/ecs-deploy@master
         env:
@@ -37,7 +48,7 @@ jobs:
           cluster: 'default-api-test-cluster'
           image_cmd: '--image'
 
-          image: '166952552828.dkr.ecr.us-east-1.amazonaws.com/default-api-test-cluster/default-api-test-repo:dfbe4b3ce4469844406b77b787934d5cfb29b9e1'
+          image: ${{ steps.build-image.outputs.image }}
           region_cmd: '--region'
           region: 'us-east-1'
           service_name_cmd: '--service-name'
