@@ -1,0 +1,93 @@
+name: Production Proxy Deployment
+
+on:
+  push:
+    branches:
+      - beta
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+#      - name: Get current image tag
+#        id: current-image
+#        env:
+#          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+#        run: |
+#          NETWORK=${{ matrix.networks }}
+#          IMAGE_TAG=$(aws ecr describe-images --output json --repository-name prod-proxy-repo --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+#          echo "::set-output name=image-tag::$ECR_REGISTRY/prod-proxy-repo:${IMAGE_TAG}"
+      
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: prod-proxy-repo
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build --build-arg NPM_TOKEN=${{ secrets.NPM_TOKEN }} -t $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG"
+
+      - name: Download task definition
+        id: download-td
+        run: |
+          aws ecs describe-task-definition --task-definition default-api-test-td --query taskDefinition > task-definition-proxy.json
+          aws ecs describe-task-definition --task-definition default-api-test-td --query taskDefinition > reserve-task-definition-proxy.json
+          echo "::set-output name=reserve-td::reserve-task-definition-proxy.json"
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition-proxy.json
+          container-name: default-api-test-td
+          image: ${{ steps.build-image.outputs.image }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: default-api-test-service
+          cluster: default-api-test-cluster
+          wait-for-service-stability: true
+        timeout-minutes: 35
+
+#      - name: Report Status
+#        if: always()
+#        uses: ravsamhq/notify-slack-action@v1
+#        with:
+#          status: ${{ job.status }}
+#          notification_title: '{workflow} has {status_message}'
+#          message_format: '{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>'
+#          footer: 'Linked to Repo <{repo_url}|{repo}>'
+#        env:
+#          SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
+#
+#      - name: Deploy Amazon ECS with old image
+#        if: ${{ failure() }}
+#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+#        with:
+#          task-definition: ${{ steps.download-td.outputs.reserve-td }}
+#          service: prod-proxy-service
+#          cluster: prod-proxy-cluster
+#          wait-for-service-stability: true
+#        timeout-minutes: 35
