@@ -71,6 +71,12 @@ jobs:
           wait-for-service-stability: true
         timeout-minutes: 2
 
+      - name: Stop current task
+        if: ${{ failure() }}
+        run: |
+          TASK_ARN=$(aws ecs list-tasks --cluster "default-api-test-cluster" --service "default-api-test-service" --output text --query taskArns[0])
+          aws ecs stop-task --cluster "default-api-test-cluster" --task ${TASK_ARN}
+
       - name: Deploy Amazon ECS with old image
         if: ${{ failure() }}
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
