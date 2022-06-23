@@ -3,7 +3,7 @@ name: Production Proxy Deployment
 on:
   push:
     branches:
-      - main
+      - beta
   workflow_dispatch:
 
 jobs:
@@ -34,7 +34,6 @@ jobs:
 #          NETWORK=${{ matrix.networks }}
 #          IMAGE_TAG=$(aws ecr describe-images --output json --repository-name prod-proxy-repo --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
 #          echo "::set-output name=image-tag::$ECR_REGISTRY/prod-proxy-repo:${IMAGE_TAG}"
-      
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image

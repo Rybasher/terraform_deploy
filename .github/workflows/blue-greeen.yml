@@ -1,0 +1,33 @@
+name: Blue Print Proxy Deployment
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy_to_ecs:
+    name: 'Deploy updated container image via blue/green deployment to ECS service.'
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: silinternational/ecs-deploy@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
+        with:
+          aws_access_key_cmd: '--aws-access-key'
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key_cmd: '--aws-secret-key'
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          cluster_cmd: '--cluster'
+          cluster: 'default-api-test-cluster'
+          image_cmd: '--image'
+          image: '{amazon_id}.dkr.ecr.us-east-1.amazonaws.com/default-api-test-cluster/default-api-test-repo:latest'
+          region_cmd: '--region'
+          region: 'us-east-1'
+          service_name_cmd: '--service-name'
+          service_name: 'default-api-test-service'
+          timeout_cmd: '--timeout'
+          timeout: '360'
