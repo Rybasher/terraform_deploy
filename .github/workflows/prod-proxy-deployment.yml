@@ -66,28 +66,17 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: default-api-test-service
+          service: default-api-test-servic2
           cluster: default-api-test-cluster
           wait-for-service-stability: true
-        timeout-minutes: 35
+        timeout-minutes: 2
 
-#      - name: Report Status
-#        if: always()
-#        uses: ravsamhq/notify-slack-action@v1
-#        with:
-#          status: ${{ job.status }}
-#          notification_title: '{workflow} has {status_message}'
-#          message_format: '{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>'
-#          footer: 'Linked to Repo <{repo_url}|{repo}>'
-#        env:
-#          SLACK_WEBHOOK_URL: 'https://hooks.slack.com/services/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'
-#
-#      - name: Deploy Amazon ECS with old image
-#        if: ${{ failure() }}
-#        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-#        with:
-#          task-definition: ${{ steps.download-td.outputs.reserve-td }}
-#          service: prod-proxy-service
-#          cluster: prod-proxy-cluster
-#          wait-for-service-stability: true
-#        timeout-minutes: 35
+      - name: Deploy Amazon ECS with old image
+        if: ${{ failure() }}
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.download-td.outputs.reserve-td }}
+          service: prod-proxy-service
+          cluster: prod-proxy-cluster
+          wait-for-service-stability: true
+        timeout-minutes: 35
