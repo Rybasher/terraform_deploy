@@ -76,7 +76,7 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.download-td.outputs.reserve-td }}
-          service: prod-proxy-service
-          cluster: prod-proxy-cluster
+          service: default-api-test-service
+          cluster: default-api-test-cluster
           wait-for-service-stability: true
         timeout-minutes: 35
