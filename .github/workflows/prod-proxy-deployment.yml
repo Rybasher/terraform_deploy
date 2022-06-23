@@ -3,7 +3,7 @@ name: Production Proxy Deployment
 on:
   push:
     branches:
-      - beta
+      - main
   workflow_dispatch:
 
 jobs:
