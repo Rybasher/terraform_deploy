@@ -33,7 +33,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/default-api-test-repo1:$IMAGE_TAG
+          docker push $ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/default-api-test-repo:$IMAGE_TAG"
 
       - name: Blue green deploy
