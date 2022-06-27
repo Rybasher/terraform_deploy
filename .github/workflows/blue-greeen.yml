@@ -25,6 +25,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Get current image tag
+        id: current-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          
+          IMAGE_TAG=$(aws ecr describe-images --output json --repository-name prod-proxy-repo --query 'sort_by(imageDetails,& imagePushedAt)[-1].imageTags[0]')
+          echo "::set-output name=image-tag::$ECR_REGISTRY/prod-proxy-repo:${IMAGE_TAG}"
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
