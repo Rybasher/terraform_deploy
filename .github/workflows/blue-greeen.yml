@@ -66,4 +66,4 @@ jobs:
           service_name_cmd: '--service-name'
           service_name: 'default-api-test-service'
           timeout_cmd: '--timeout'
-          timeout: '320'
+          timeout: '2100'
